@@ -12,12 +12,12 @@
 
 ```bash
 node scripts/seed.js     # 1) 生成示例书城数据（4 层，59 节点 / 84 边）
-npm start                # 2) 启动服务（默认 3000 端口）
+ADMIN_KEY=your-secret npm start   # 2) 启动服务（默认 3000 端口）
 # 打开 http://localhost:3000
-npm test                 # 端到端 API 测试（需先启动服务）
+ADMIN_KEY=your-secret npm test    # 端到端 API 测试（需先启动服务，密钥与服务一致）
 ```
 
-- 管理员密钥（演示固定）：`bookstore-admin`
+- 管理员密钥：通过环境变量 `ADMIN_KEY` 设置；未设置时每次启动会随机生成一个密钥并打印到服务端控制台（重启即失效）
 - 重新播种：先停服务，再 `node scripts/seed.js`（服务会监听数据文件自动刷新缓存）
 
 ## 功能一览

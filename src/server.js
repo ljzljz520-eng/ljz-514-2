@@ -1,5 +1,6 @@
 // 书城找书路线系统 — HTTP 服务（零依赖）
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -9,7 +10,8 @@ const { describe, optionTags } = require('./directions');
 const { corridorMeters } = require('./geo');
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_KEY = 'bookstore-admin';
+// 管理员密钥：从环境变量 ADMIN_KEY 读取；未设置时每次启动随机生成（仅打印到服务端控制台，不公开）
+const ADMIN_KEY = process.env.ADMIN_KEY || crypto.randomBytes(16).toString('hex');
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 const FLOORS = [
@@ -47,7 +49,10 @@ function readBody(req) {
   });
 }
 function requireAdmin(req, res) {
-  if (req.headers['x-admin-key'] !== ADMIN_KEY) {
+  const key = String(req.headers['x-admin-key'] || '');
+  const ok = key.length === ADMIN_KEY.length &&
+    crypto.timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY));
+  if (!ok) {
     send(res, 401, { error: '管理员密钥错误或缺失（请在管理页面登录）' });
     return false;
   }
@@ -74,8 +79,8 @@ function handleRoute(body, res) {
   const nodes = store.getNodes();
   const get = id => nodes.find(n => String(n.id) === String(id));
   const entNode = get(entrance), zoneNode = get(zoneId), cashNode = get(cashierId);
-  if (!entNode) return send(res, 400, { error: '入口不存在' });
-  if (!zoneNode) return send(res, 400, { error: '所选书区不存在' });
+  if (!entNode || entNode.type !== 'entrance') return send(res, 400, { error: '所选入口不存在' });
+  if (!zoneNode || zoneNode.type !== 'zone') return send(res, 400, { error: '所选书区不存在' });
   if (!cashNode || cashNode.type !== 'cashier') return send(res, 400, { error: '所选收银台不存在' });
   if (zoneNode.floor !== Number(floorId)) return send(res, 400, { error: '书区与所选楼层不匹配' });
 
@@ -110,6 +115,10 @@ function validateEdge(b) {
   if (!store.getNode(b.a) || !store.getNode(b.b)) return '两个端点都必须存在';
   if (b.a === b.b) return '起点终点不能相同';
   if (![0, 1, 2, 3].includes(Number(b.crowd || 0))) return '拥挤度必须为 0~3';
+  if (b.distance !== undefined && b.distance !== null && b.distance !== '') {
+    const d = Number(b.distance);
+    if (!Number.isFinite(d) || d <= 0) return '距离必须为正数（留空则按坐标自动计算）';
+  }
   return null;
 }
 function fillEdgeDistance(edge) {
@@ -245,5 +254,9 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`书城找书路线系统已启动: http://localhost:${PORT}`);
-  console.log(`管理员密钥: ${ADMIN_KEY}`);
+  if (process.env.ADMIN_KEY) {
+    console.log('管理员密钥: 已从环境变量 ADMIN_KEY 读取');
+  } else {
+    console.log(`未设置 ADMIN_KEY 环境变量，本次启动的随机管理员密钥: ${ADMIN_KEY}`);
+  }
 });
