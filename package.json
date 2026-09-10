@@ -1,0 +1,13 @@
+{
+  "name": "bookstore-route-system",
+  "version": "1.0.0",
+  "description": "大型书城找书路线系统：基于距离/扶梯电梯/拥挤度的多方案路线推荐与分步指引",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node test/api.test.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}

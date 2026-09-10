@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大型书城找书路线系统</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <h1>📚 大型书城找书路线系统</h1>
+  <span class="sub">综合距离 · 扶梯/电梯/楼梯 · 实时拥挤度的智能导购</span>
+  <nav class="tabs">
+    <button id="tab-user" class="active">找书路线</button>
+    <button id="tab-admin">管理员维护</button>
+  </nav>
+</header>
+
+<main>
+<!-- ================= 用户视图 ================= -->
+<section id="view-user">
+  <div class="card">
+    <h2>🧭 我要去哪里 <span class="en">选择楼层、书区与收银台</span></h2>
+    <div class="form-row">
+      <div class="field">
+        <label>入口（默认正门）</label>
+        <select id="in-entrance"></select>
+      </div>
+      <div class="field">
+        <label>① 选择楼层</label>
+        <select id="in-floor"><option value="">请选择楼层</option></select>
+      </div>
+      <div class="field">
+        <label>② 选择书区</label>
+        <select id="in-zone" disabled><option value="">请先选楼层</option></select>
+      </div>
+      <div class="field">
+        <label>③ 选择收银台</label>
+        <select id="in-cashier"></select>
+      </div>
+      <button class="btn" id="btn-search">推荐路线</button>
+    </div>
+    <div id="user-error" class="error hidden" style="margin-top:12px"></div>
+  </div>
+
+  <div id="result-area" class="hidden">
+    <div class="card">
+      <h2>🅰 去程方案：入口 → 书区 <span class="en">点击卡片切换</span></h2>
+      <div id="go-opts" class="optgrid"></div>
+    </div>
+    <div class="card">
+      <h2>🅱 离场方案：书区 → 收银台 <span class="en">买完书怎么去结账</span></h2>
+      <div id="back-opts" class="optgrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>👣 每一步怎么走（分步指引）</h2>
+      <div class="layout">
+        <div>
+          <h3 id="go-steps-title" style="font-size:14px;margin:0 0 10px">去程</h3>
+          <ul id="go-steps" class="timeline"></ul>
+          <h3 id="back-steps-title" style="font-size:14px;margin:18px 0 10px">离场</h3>
+          <ul id="back-steps" class="timeline"></ul>
+        </div>
+        <div class="mapwrap">
+          <div class="floorswitch" id="map-floors"></div>
+          <svg id="map" class="map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="legend">
+            <span><i style="background:#1d4ed8"></i>去程路线</span>
+            <span><i style="background:#ea580c"></i>离场路线</span>
+            <span><i style="background:#cbd5e1"></i>其他通道</span>
+            <span><i style="background:#7c3aed"></i>扶梯/电梯/楼梯</span>
+            <span>拥挤度：
+              <i style="background:#16a34a"></i>畅通
+              <i style="background:#84cc16"></i>较少
+              <i style="background:#f59e0b"></i>拥挤
+              <i style="background:#dc2626"></i>很挤
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 管理员视图 ================= -->
+<section id="view-admin" class="hidden">
+  <div class="card" id="admin-login-card">
+    <h2>🔐 管理员登录</h2>
+    <div class="form-row">
+      <div class="field">
+        <label>管理员密钥</label>
+        <input type="password" id="admin-key" placeholder="请输入密钥（演示：bookstore-admin）" style="min-width:280px">
+      </div>
+      <button class="btn" id="btn-login">登录</button>
+    </div>
+    <div id="admin-login-error" class="error hidden" style="margin-top:12px"></div>
+  </div>
+
+  <div id="admin-panel" class="hidden">
+    <div class="adminbar">
+      <div class="subtabs" style="margin:0">
+        <button id="st-node" class="active">书区/节点</button>
+        <button id="st-edge">通道/边</button>
+      </div>
+      <button class="btn ghost sm" id="btn-logout" style="margin-left:auto">退出登录</button>
+    </div>
+
+    <div id="tab-node-panel">
+      <div class="grid2">
+        <div class="card" style="margin:0">
+          <h2>➕ <span id="node-form-title">新增节点</span></h2>
+          <input type="hidden" id="nf-id">
+          <div class="formgrid">
+            <div><label>名称</label><input id="nf-name" placeholder="如：外文原版区"></div>
+            <div><label>类型</label><select id="nf-type"></select></div>
+            <div><label>所在楼层</label><select id="nf-floor"></select></div>
+            <div><label>x 坐标（0~1000）</label><input id="nf-x" type="number" min="0" max="1000"></div>
+            <div><label>y 坐标（0~700）</label><input id="nf-y" type="number" min="0" max="700"></div>
+            <div class="full">
+              <button class="btn" id="btn-node-save">保存节点</button>
+              <button class="btn ghost" id="btn-node-cancel">清空重填</button>
+              <span class="muted">提示：可在右侧平面图上点击自动填入坐标</span>
+            </div>
+          </div>
+          <div id="node-form-msg" style="margin-top:10px"></div>
+        </div>
+        <div class="card" style="margin:0">
+          <h2>🗺️ 平面图点选坐标
+            <span class="en">楼层</span><select id="nf-map-floor"></select>
+          </h2>
+          <svg id="admin-map" class="map" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair"></svg>
+          <div class="muted" style="margin-top:6px">点击图上位置即可把坐标和楼层填入左侧表单。</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📋 节点列表 <span class="en" id="node-count"></span></h2>
+        <div class="tablescroll">
+          <table>
+            <thead><tr><th>ID</th><th>名称</th><th>类型</th><th>楼层</th><th>x</th><th>y</th><th>操作</th></tr></thead>
+            <tbody id="node-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-edge-panel" class="hidden">
+      <div class="grid2">
+        <div class="card" style="margin:0">
+          <h2>➕ <span id="edge-form-title">新增通道/跨层边</span></h2>
+          <input type="hidden" id="ef-id">
+          <div class="formgrid">
+            <div><label>类型</label><select id="ef-type"></select></div>
+            <div><label>拥挤度</label><select id="ef-crowd"></select></div>
+            <div class="full"><label>端点 A</label><select id="ef-a"></select></div>
+            <div class="full"><label>端点 B</label><select id="ef-b"></select></div>
+            <div><label>通道名称（可选）</label><input id="ef-wayname" placeholder="如：外语区通道"></div>
+            <div><label>距离/米（通道留空自动算）</label><input id="ef-distance" type="number" min="1"></div>
+            <div class="full">
+              <button class="btn" id="btn-edge-save">保存边</button>
+              <button class="btn ghost" id="btn-edge-cancel">清空重填</button>
+            </div>
+          </div>
+          <div id="edge-form-msg" style="margin-top:10px"></div>
+        </div>
+        <div class="card" style="margin:0">
+          <h2>💡 说明</h2>
+          <div class="muted" style="line-height:1.9">
+            · 所有边均为<b>双向</b>，只需建一条。<br>
+            · <b>通道</b>两端必须同楼层，距离留空时按坐标自动计算。<br>
+            · <b>扶梯 / 电梯 / 楼梯</b>两端必须跨楼层（建议相邻层），无需填距离。<br>
+            · 调整拥挤度会立刻影响推荐路线，数据即时保存到服务器。
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📋 边列表 <span class="en" id="edge-count"></span></h2>
+        <div class="tablescroll">
+          <table>
+            <thead><tr><th>ID</th><th>类型</th><th>端点 A</th><th>端点 B</th><th>名称</th><th>距离</th><th>拥挤度</th><th>操作</th></tr></thead>
+            <tbody id="edge-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
