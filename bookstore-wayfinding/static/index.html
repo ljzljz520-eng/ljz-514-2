@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>书山有路 · 大型书城找书路线系统</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">📚 书山有路 <small>大型书城智能导览</small></div>
+  <nav><a href="index.html" class="active">读者找书</a><a href="admin.html">管理员后台</a></nav>
+</header>
+
+<main class="layout">
+  <!-- 左：查询 + 路线步骤 -->
+  <section class="panel left-panel">
+    <div class="card query-card">
+      <h2>我要找书</h2>
+      <label>出发位置
+        <select id="startSel"></select>
+      </label>
+      <label>想去的楼层
+        <select id="floorSel"></select>
+      </label>
+      <label>目标书区
+        <select id="zoneSel"></select>
+      </label>
+      <label class="checkline">
+        <input type="checkbox" id="viaCashier"> 找完书后去该层收银台
+      </label>
+      <label id="cashierWrap" style="display:none">选择收银台
+        <select id="cashierSel"></select>
+      </label>
+      <div class="prefs">
+        <span>路线偏好：</span>
+        <button class="pref active" data-pref="all">全部对比</button>
+        <button class="pref" data-pref="balanced">综合推荐</button>
+        <button class="pref" data-pref="comfort">人少舒适</button>
+        <button class="pref" data-pref="escalator">扶梯优先</button>
+      </div>
+      <button id="planBtn" class="primary">🧭 生成找书路线</button>
+      <div id="queryErr" class="error"></div>
+    </div>
+
+    <div class="card route-card" id="routeCard" style="display:none">
+      <div class="route-head">
+        <div>
+          <h2>推荐路线</h2>
+          <div id="routeSummary" class="summary"></div>
+        </div>
+      </div>
+      <div id="routeTabs" class="tabs"></div>
+      <ol id="stepList" class="steps"></ol>
+    </div>
+  </section>
+
+  <!-- 右：楼层地图 -->
+  <section class="panel map-panel">
+    <div class="floor-switch" id="floorSwitch"></div>
+    <div class="map-scroll"><svg id="mapSvg" viewBox="0 0 1000 700"></svg></div>
+    <div class="legend">
+      <span><i class="lg zone"></i>书区</span>
+      <span><i class="lg cashier"></i>收银台</span>
+      <span><i class="lg escalator"></i>扶梯</span>
+      <span><i class="lg elevator"></i>电梯</span>
+      <span><i class="lg entrance"></i>入口</span>
+      <span><i class="lg junction"></i>通道</span>
+      <span><b class="route-line"></b>推荐路线</span>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
